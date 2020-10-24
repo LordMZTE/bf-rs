@@ -1,7 +1,4 @@
-use std::{
-    convert::{TryFrom, TryInto},
-    io::Read,
-};
+use std::{collections::LinkedList, convert::{TryFrom, TryInto}, io::Read};
 
 use serde::{Serialize, Deserialize};
 
@@ -39,7 +36,7 @@ impl TryFrom<char> for Token {
 #[serde(rename_all = "lowercase", untagged)]
 pub enum Tree {
     Instruction(Instruction),
-    Block(Vec<Tree>),
+    Block(LinkedList<Tree>),
 }
 
 #[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -53,17 +50,17 @@ pub enum Instruction {
 }
 
 impl Tree {
-    pub fn parse<'a>(mut it: impl Iterator<Item = &'a Token>) -> Vec<Tree> {
-        let mut buf = Vec::new();
+    pub fn parse<'a>(mut it: impl Iterator<Item = &'a Token>) -> LinkedList<Tree> {
+        let mut buf = LinkedList::new();
 
         while let Some(t) = it.next() {
             match t {
-                Token::IncrementPtr => buf.push(Tree::Instruction(Instruction::IncrementPtr)),
-                Token::DecrementPtr => buf.push(Tree::Instruction(Instruction::DecrementPtr)),
-                Token::Increment => buf.push(Tree::Instruction(Instruction::Increment)),
-                Token::Decrement => buf.push(Tree::Instruction(Instruction::Decrement)),
-                Token::Output => buf.push(Tree::Instruction(Instruction::Output)),
-                Token::Input => buf.push(Tree::Instruction(Instruction::Input)),
+                Token::IncrementPtr => buf.push_back(Tree::Instruction(Instruction::IncrementPtr)),
+                Token::DecrementPtr => buf.push_back(Tree::Instruction(Instruction::DecrementPtr)),
+                Token::Increment => buf.push_back(Tree::Instruction(Instruction::Increment)),
+                Token::Decrement => buf.push_back(Tree::Instruction(Instruction::Decrement)),
+                Token::Output => buf.push_back(Tree::Instruction(Instruction::Output)),
+                Token::Input => buf.push_back(Tree::Instruction(Instruction::Input)),
 
                 Token::JumpFwd => {
                     let mut tokens = Vec::new();
@@ -82,7 +79,7 @@ impl Tree {
                         tokens.push(token);
                     }
 
-                    buf.push(Self::Block(Self::parse(tokens.into_iter())));
+                    buf.push_back(Self::Block(Self::parse(tokens.into_iter())));
                 }
 
                 _ => {}
@@ -93,8 +90,8 @@ impl Tree {
     }
 }
 
-pub fn tokenize(s: &mut impl Read) -> Option<Vec<Token>> {
-    let mut buf = Vec::new();
+pub fn tokenize(s: &mut impl Read) -> Option<LinkedList<Token>> {
+    let mut buf = LinkedList::new();
     let mut bytes = [0u8; 100];
     let mut read = 1;
 
@@ -103,7 +100,7 @@ pub fn tokenize(s: &mut impl Read) -> Option<Vec<Token>> {
 
         for i in 0..read {
             if let Ok(t) = (bytes[i] as char).try_into() {
-                buf.push(t);
+                buf.push_back(t);
             }
         }
     }

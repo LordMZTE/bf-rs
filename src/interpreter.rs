@@ -48,6 +48,7 @@ pub fn run_instruction(
         }
         Instruction::Output => {
             stdout.write(&[*mem.entry(*ptr).or_default()]).unwrap();
+            stdout.flush().unwrap();
         }
         Instruction::Input => {
             let mut buf = [0u8; 1];
