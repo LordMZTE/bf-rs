@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{io::BufReader, fs::File};
 
 use anyhow::{Context, Result};
 use clap::{App, Arg};
@@ -29,12 +29,12 @@ fn main() -> Result<()> {
         )
         .get_matches();
 
-    let mut file = File::open(matches.value_of("file").context(ARG_FAIL)?)?;
+    let file = File::open(matches.value_of("file").context(ARG_FAIL)?)?;
 
     let tree = if matches.is_present("ast") {
         serde_json::from_reader(file)?
     } else {
-        let tokens = tokenizer::tokenize(&mut file).context("tokenization failed")?;
+        let tokens = tokenizer::tokenize(BufReader::new(file));
         tokenizer::Tree::parse(tokens.iter())
     };
 

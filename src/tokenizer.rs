@@ -1,6 +1,6 @@
-use std::{collections::LinkedList, convert::{TryFrom, TryInto}, io::Read};
+use std::{collections::LinkedList, convert::TryFrom, io::BufRead};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Token {
@@ -90,25 +90,8 @@ impl Tree {
     }
 }
 
-pub fn tokenize(s: &mut impl Read) -> Option<LinkedList<Token>> {
-    let mut buf = LinkedList::new();
-    let mut bytes = [0u8; 100];
-    let mut read = 1;
-
-    while read > 0 {
-        read = s.read(&mut bytes).ok()?;
-
-        for i in 0..read {
-            if let Ok(t) = (bytes[i] as char).try_into() {
-                buf.push_back(t);
-            }
-        }
-    }
-
-    // for c in s. {
-    //     if let Ok(t) = c.try_into() {
-    //         buf.push(t)
-    //     }
-    // }
-    Some(buf)
+pub fn tokenize(s: impl BufRead) -> LinkedList<Token> {
+    s.bytes()
+        .filter_map(|c| c.ok().and_then(|x| Token::try_from(x as char).ok()))
+        .collect()
 }
